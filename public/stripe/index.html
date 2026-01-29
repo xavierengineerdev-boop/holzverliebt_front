@@ -654,29 +654,54 @@
                             : '';
                         const baseUrl = apiBaseUrl ? apiBaseUrl.replace(/\/api$/, '') : '';
                         
+                        console.log('API Base URL from window:', window.__API_BASE_URL__);
+                        console.log('Base URL:', baseUrl);
+                        
                         const endpoints = baseUrl 
                             ? [`${baseUrl}/api/admin/orders`, '/api/admin/orders']
                             : ['/api/admin/orders'];
+                        
+                        console.log('Attempting to create order. Endpoints:', endpoints);
+                        console.log('Payload:', payload);
+                        
                         let resp = null;
+                        let lastError = null;
+                        
                         for (const ep of endpoints) {
                             try {
+                                console.log('Trying endpoint:', ep);
                                 resp = await fetch(ep, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(payload)
                                 });
-                                if (resp && resp.ok) break;
+                                
+                                console.log('Response status:', resp.status, resp.statusText);
+                                
+                                if (resp && resp.ok) {
+                                    const responseData = await resp.json();
+                                    console.log('Order created successfully:', responseData);
+                                    localStorage.removeItem('cart');
+                                    window.location.href = '/thank-you.html';
+                                    return;
+                                } else {
+                                    const errorText = await resp.text();
+                                    console.error('Error response from', ep, ':', resp.status, errorText);
+                                    lastError = `Status: ${resp.status}, ${errorText.substring(0, 100)}`;
+                                }
                             } catch (e) {
+                                console.error('Fetch error for', ep, ':', e);
+                                lastError = e.message;
                                 resp = null;
                             }
                         }
 
-                        if (resp && resp.ok) {
-                            localStorage.removeItem('cart');
-                            window.location.href = '/thank-you.html';
-                        } else {
-                            alert('Ошибка при создании заказа: не удалось связаться с бэкендом');
-                        }
+                        // Если ни один endpoint не сработал
+                        const errorMsg = lastError 
+                            ? `Ошибка при создании заказа: ${lastError}` 
+                            : 'Ошибка при создании заказа: не удалось связаться с бэкендом. Убедитесь, что бэкенд запущен.';
+                        alert(errorMsg);
+                        console.error('All endpoints failed. Last error:', lastError);
                     } catch (e) {
                         console.error(e);
                         alert('Ошибка при оплате: ' + e.message);
