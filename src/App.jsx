@@ -195,22 +195,42 @@ function App() {
 
   const handleOrderSubmit = async (e) => {
     e.preventDefault()
+    
+    // Валидация обязательных полей
+    if (!orderData.firstName || !orderData.lastName || !orderData.email || 
+        !orderData.phone || !orderData.address || !orderData.city || !orderData.zipCode) {
+      alert('Пожалуйста, заполните все обязательные поля');
+      return;
+    }
+
     // Сохраняем данные клиента и адрес в localStorage и перенаправляем на страницу оплаты (Stripe)
     try {
       const fullName = `${orderData.firstName || ''} ${orderData.lastName || ''}`.trim();
+      
+      // Сохраняем все данные клиента
       localStorage.setItem('customerName', fullName);
+      localStorage.setItem('customerFirstName', orderData.firstName || '');
+      localStorage.setItem('customerLastName', orderData.lastName || '');
       localStorage.setItem('customerEmail', orderData.email || '');
       localStorage.setItem('customerPhone', orderData.phone || '');
       localStorage.setItem('customerAddress', orderData.address || '');
       localStorage.setItem('customerCity', orderData.city || '');
+      localStorage.setItem('customerZipCode', orderData.zipCode || '');
+      localStorage.setItem('customerCountry', orderData.country || 'Poland');
+      localStorage.setItem('customerBuilding', orderData.building || '');
+      localStorage.setItem('customerApartment', orderData.apartment || '');
+      localStorage.setItem('customerNotes', orderData.notes || '');
+      
       // Сохраняем сумму и название продукта для отображения на странице оплаты
       const prod = selectedProduct || (products && products[0])
-      const price = prod && prod.price ? prod.price.current.toFixed(2) : '0.00';
+      const totalPrice = prod && prod.price ? (prod.price.current * quantity).toFixed(2) : '0.00';
       const productName = prod && prod.name ? prod.name : '';
-      localStorage.setItem('checkoutPrice', price);
+      
+      localStorage.setItem('checkoutPrice', totalPrice);
       const currency = prod && prod.price ? prod.price.currency : 'zł';
       localStorage.setItem('checkoutCurrency', currency || 'zł');
       localStorage.setItem('productName', productName);
+      localStorage.setItem('productQuantity', quantity.toString());
 
       // Store cart items so the stripe page can read them (use selectedProduct)
       try {
@@ -220,19 +240,34 @@ function App() {
           id: productId,
           _id: productId,
           title: productName,
-          price: parseFloat(price),
+          price: prod && prod.price ? prod.price.current : 0,
           quantity: quantity
         };
         localStorage.setItem('cart', JSON.stringify([cartItem]));
+        console.log('Cart saved to localStorage:', cartItem);
       } catch (err) {
-        // Non-fatal; continue
         console.warn('Failed to set cart in localStorage', err);
+        alert('Ошибка при сохранении корзины. Попробуйте еще раз.');
+        return;
       }
 
+      // Проверяем, что данные сохранились
+      const savedEmail = localStorage.getItem('customerEmail');
+      const savedCart = localStorage.getItem('cart');
+      
+      if (!savedEmail || !savedCart) {
+        alert('Ошибка при сохранении данных. Попробуйте еще раз.');
+        return;
+      }
+
+      console.log('Order data saved successfully. Redirecting to payment page...');
+      
       // Перенаправляем на страницу оплаты
+      // Используем правильный путь для Vite
       window.location.href = '/src/stripe/index.html';
     } catch (err) {
-      alert('❌ Ошибка при подготовке к оплате: ' + err.message)
+      console.error('Error in handleOrderSubmit:', err);
+      alert('❌ Ошибка при подготовке к оплате: ' + (err.message || 'Неизвестная ошибка'))
     }
   }
 

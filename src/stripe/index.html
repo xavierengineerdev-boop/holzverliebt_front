@@ -322,12 +322,30 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Load price and currency from URL parameters or localStorage
             const urlParams = new URLSearchParams(window.location.search);
-            const price = urlParams.get('price') || localStorage.getItem('checkoutPrice') || '29.99';
-            const currency = urlParams.get('currency') || localStorage.getItem('checkoutCurrency') || 'PLN';
-            const productName = urlParams.get('product') || localStorage.getItem('productName') || 'Toy order';
+            // Загружаем данные из localStorage
+            const price = urlParams.get('price') || localStorage.getItem('checkoutPrice') || '0.00';
+            const currency = urlParams.get('currency') || localStorage.getItem('checkoutCurrency') || 'zł';
+            const productName = urlParams.get('product') || localStorage.getItem('productName') || 'Order';
+            
+            // Загружаем данные клиента для предзаполнения формы
+            const customerEmail = localStorage.getItem('customerEmail') || '';
+            const customerPhone = localStorage.getItem('customerPhone') || '';
 
+            // Устанавливаем значения на странице
             document.getElementById('totalPrice').textContent = price + ' ' + currency;
             document.getElementById('productName').textContent = productName;
+            
+            // Предзаполняем email и телефон, если они есть
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+            if (emailInput && customerEmail) {
+                emailInput.value = customerEmail;
+            }
+            if (phoneInput && customerPhone) {
+                phoneInput.value = customerPhone;
+            }
+            
+            console.log('Payment page loaded:', { price, currency, productName, customerEmail, customerPhone });
             
             // Алгоритм Луна для проверки номера карты
             function luhnCheck(num) {
