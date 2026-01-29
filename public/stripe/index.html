@@ -7,13 +7,11 @@
     <script src="https://cdn.jsdelivr.net/npm/imask@7.0.0"></script>
     <script>
         // Устанавливаем API базовый URL из переменной окружения
-        // Для статических HTML файлов используем data-атрибут или window переменную
+        // Для статических HTML файлов используем window переменную
         (function() {
             // Пытаемся получить из window (если установлено через Vite)
             if (typeof window !== 'undefined' && window.__API_BASE_URL__) {
                 // Уже установлено
-            } else if (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.VITE_API_URL) {
-                window.__API_BASE_URL__ = import.meta.env.VITE_API_URL;
             } else {
                 // Используем относительный путь по умолчанию
                 window.__API_BASE_URL__ = '';
@@ -349,7 +347,7 @@
             
             // Предзаполняем email и телефон, если они есть
             const emailInput = document.getElementById('email');
-            const phoneInput = document.getElementById('phone');
+            let phoneInput = document.getElementById('phone');
             if (emailInput && customerEmail) {
                 emailInput.value = customerEmail;
             }
@@ -459,8 +457,7 @@
                 });
             }
 
-            // Phone mask
-            const phoneInput = document.getElementById('phone');
+            // Phone mask (используем уже объявленную переменную phoneInput)
             if (phoneInput) {
                 phoneInput.addEventListener('input', function(e) {
                     let value = e.target.value.replace(/\D/g, '');
@@ -676,7 +673,7 @@
 
                         if (resp && resp.ok) {
                             localStorage.removeItem('cart');
-                            window.location.href = '/src/thank-you.html';
+                            window.location.href = '/thank-you.html';
                         } else {
                             alert('Ошибка при создании заказа: не удалось связаться с бэкендом');
                         }
