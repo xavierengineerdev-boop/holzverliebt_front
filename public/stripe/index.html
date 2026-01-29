@@ -650,12 +650,12 @@
                         console.log('API Base URL from window:', window.__API_BASE_URL__);
                         console.log('Base URL:', baseUrl);
                         
-                        // Пробуем оба endpoint'а: /api/admin/orders и /api/orders
+                        // Пробуем endpoint'ы в порядке приоритета: сначала /api/admin/orders (более надежный)
                         const endpoints = baseUrl 
                             ? [
-                                `${baseUrl}/api/admin/orders`, 
-                                `${baseUrl}/api/orders`,
+                                `${baseUrl}/api/admin/orders`,
                                 '/api/admin/orders',
+                                `${baseUrl}/api/orders`,
                                 '/api/orders'
                               ]
                             : ['/api/admin/orders', '/api/orders'];
@@ -696,11 +696,20 @@
                         }
 
                         // Если ни один endpoint не сработал
-                        const errorMsg = lastError 
-                            ? `Ошибка при создании заказа: ${lastError}` 
-                            : 'Ошибка при создании заказа: не удалось связаться с бэкендом. Убедитесь, что бэкенд запущен.';
+                        let errorMsg = 'Ошибка при создании заказа. ';
+                        
+                        if (lastError && lastError.includes('405')) {
+                            errorMsg += 'Сервер не разрешает POST запросы. Проблема в конфигурации Nginx на сервере. ';
+                            errorMsg += 'Необходимо настроить Nginx для разрешения POST запросов к /api/* endpoints.';
+                        } else if (lastError) {
+                            errorMsg += lastError;
+                        } else {
+                            errorMsg += 'Не удалось связаться с бэкендом. Убедитесь, что бэкенд запущен.';
+                        }
+                        
                         alert(errorMsg);
                         console.error('All endpoints failed. Last error:', lastError);
+                        console.error('Если ошибка 405, проверьте конфигурацию Nginx на сервере.');
                     } catch (e) {
                         console.error(e);
                         alert('Ошибка при оплате: ' + e.message);
