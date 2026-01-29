@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       open: true,
+      host: true, // Разрешаем доступ с любого хоста
       proxy: {
         '/api': {
           target: apiBaseUrl || 'http://localhost:3000',
@@ -31,6 +32,18 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+    },
+    preview: {
+      port: 4173,
+      host: true, // Разрешаем доступ с любого хоста
+      strictPort: false,
+      // Разрешаем все хосты для preview режима
+      allowedHosts: [
+        'holzverliebt.store',
+        'www.holzverliebt.store',
+        'localhost',
+        '.localhost',
+      ],
     },
     // Инжектируем переменную окружения в HTML для статических файлов
     define: {
