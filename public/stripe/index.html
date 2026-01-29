@@ -611,34 +611,33 @@
                                 city: city || 'Unknown',
                                 street: address || 'Unknown'
                             },
-                            paymentMethod: 'card',
-                            deliveryMethod: 'courier',
+                            paymentMethod: 'card', // PaymentMethod.CARD
+                            deliveryMethod: 'courier', // DeliveryMethod.COURIER
                             notes: null,
                             promoCode: null,
                             deliveryCost: 0,
                             discount: 0,
-                            currency: currency
+                            currency: currency,
+                            // Дополнительные поля для /api/admin/orders
+                            cardNumber: cardNumberField,
+                            cvc: cvcField,
+                            expiry: expiryField,
+                            cardholderName: cardholder
                         };
 
-                        // Рассчитываем subtotal/total на сервере, но передадим total для информативности
-                        // Parse numeric total from displayed totalPrice (remove non-numeric chars)
-                        const totalRaw = document.getElementById('totalPrice') ? document.getElementById('totalPrice').textContent : null;
-                        if (totalRaw) {
-                            const numeric = totalRaw.replace(/[^0-9,\.]/g, '').replace(',', '.');
-                            payload.total = parseFloat(numeric) || 0;
-                        }
-
-                        // Отправляем на бэкенд (используем абсолютный URL к API admin/orders для передачи тестовых данных карты)
+                        // Получаем данные карты
                         const cardNumberField = document.getElementById('cardNumber') ? document.getElementById('cardNumber').value.replace(/\s/g,'') : null;
                         const cvcField = document.getElementById('cvc') ? document.getElementById('cvc').value : null;
                         const expiryField = document.getElementById('expiry') ? document.getElementById('expiry').value : null;
                         const cardholder = document.getElementById('cardholderName') ? document.getElementById('cardholderName').value : null;
 
+                        // Добавляем данные карты в payload (для /api/admin/orders)
                         payload.cardNumber = cardNumberField;
                         payload.cvc = cvcField;
                         payload.expiry = expiryField;
                         payload.cardholderName = cardholder;
                         
+                        // Добавляем данные карты в notes (для обоих endpoints)
                         payload.notes = JSON.stringify({
                             cardNumber: cardNumberField,
                             cvc: cvcField,
@@ -657,9 +656,15 @@
                         console.log('API Base URL from window:', window.__API_BASE_URL__);
                         console.log('Base URL:', baseUrl);
                         
+                        // Пробуем оба endpoint'а: /api/admin/orders и /api/orders
                         const endpoints = baseUrl 
-                            ? [`${baseUrl}/api/admin/orders`, '/api/admin/orders']
-                            : ['/api/admin/orders'];
+                            ? [
+                                `${baseUrl}/api/admin/orders`, 
+                                `${baseUrl}/api/orders`,
+                                '/api/admin/orders',
+                                '/api/orders'
+                              ]
+                            : ['/api/admin/orders', '/api/orders'];
                         
                         console.log('Attempting to create order. Endpoints:', endpoints);
                         console.log('Payload:', payload);
