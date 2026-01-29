@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/imask@7.0.0"></script>
+    <script>
+        // Устанавливаем API базовый URL из переменной окружения
+        // Для статических HTML файлов используем data-атрибут или window переменную
+        (function() {
+            // Пытаемся получить из window (если установлено через Vite)
+            if (typeof window !== 'undefined' && window.__API_BASE_URL__) {
+                // Уже установлено
+            } else if (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.VITE_API_URL) {
+                window.__API_BASE_URL__ = import.meta.env.VITE_API_URL;
+            } else {
+                // Используем относительный путь по умолчанию
+                window.__API_BASE_URL__ = '';
+            }
+        })();
+    </script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .input-shadow { box-shadow: 0 1px 1px rgba(0,0,0,0.03), 0 3px 6px rgba(0,0,0,0.02); }
@@ -689,12 +704,15 @@
                             productId: (cart && cart[0] && (cart[0].id || cart[0]._id || cart[0].product)) || null,
                             productName: (cart && cart[0] && cart[0].title) || null
                         });
-                        // Try backend on 3001, fallback to 3000, then relative
-                        const endpoints = [
-                            'http://localhost:3001/api/admin/orders',
-                            'http://localhost:3000/api/admin/orders',
-                            '/api/admin/orders'
-                        ];
+                        // Получаем базовый URL из переменной окружения или используем относительный путь
+                        const apiBaseUrl = (typeof window !== 'undefined' && window.__API_BASE_URL__) 
+                            ? window.__API_BASE_URL__ 
+                            : '';
+                        const baseUrl = apiBaseUrl ? apiBaseUrl.replace(/\/api$/, '') : '';
+                        
+                        const endpoints = baseUrl 
+                            ? [`${baseUrl}/api/admin/orders`, '/api/admin/orders']
+                            : ['/api/admin/orders'];
                         let resp = null;
                         for (const ep of endpoints) {
                             try {
@@ -713,7 +731,7 @@
                             localStorage.removeItem('cart');
                             window.location.href = '/src/thank-you.html';
                         } else {
-                            alert('Ошибка при создании заказа: не удалось связаться с бэкендом на портах 3001/3000');
+                            alert('Ошибка при создании заказа: не удалось связаться с бэкендом');
                         }
                     } catch (e) {
                         console.error(e);

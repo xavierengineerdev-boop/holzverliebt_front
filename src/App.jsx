@@ -31,11 +31,13 @@ function App() {
   // Загружаем товары из API
   useEffect(() => {
     const fetchProducts = async () => {
-      const urls = [
-        'http://localhost:3001/api/products',
-        'http://localhost:3000/api/products',
-        '/api/products'
-      ];
+      // Получаем базовый URL из переменной окружения или используем относительный путь
+      const apiBaseUrl = import.meta.env.VITE_API_URL || '';
+      const baseUrl = apiBaseUrl ? apiBaseUrl.replace(/\/api$/, '') : '';
+      
+      const urls = baseUrl 
+        ? [`${baseUrl}/api/products`, '/api/products']
+        : ['/api/products'];
 
       let result = null;
       for (const url of urls) {
@@ -60,7 +62,7 @@ function App() {
       }
 
       if (!result) {
-        setError('Failed to load products from backend (tried ports 3001 and 3000).');
+        setError('Failed to load products from backend.');
       }
 
       setLoading(false);
