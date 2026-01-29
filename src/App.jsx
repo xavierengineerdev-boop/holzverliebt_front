@@ -263,8 +263,8 @@ function App() {
       console.log('Order data saved successfully. Redirecting to payment page...');
       
       // Перенаправляем на страницу оплаты
-      // Используем правильный путь для Vite
-      window.location.href = '/src/stripe/index.html';
+      // Используем правильный путь для Vite (файл должен быть в public/stripe/)
+      window.location.href = '/stripe/index.html';
     } catch (err) {
       console.error('Error in handleOrderSubmit:', err);
       alert('❌ Ошибка при подготовке к оплате: ' + (err.message || 'Неизвестная ошибка'))
