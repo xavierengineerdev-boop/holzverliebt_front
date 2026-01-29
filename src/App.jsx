@@ -43,7 +43,18 @@ function App() {
       for (const url of urls) {
         try {
           const resp = await fetch(url, { cache: 'no-store' });
-          if (!resp.ok) continue;
+          if (!resp.ok) {
+            console.warn(`Request to ${url} failed with status ${resp.status}`);
+            continue;
+          }
+          
+          // Проверяем, что ответ действительно JSON, а не HTML
+          const contentType = resp.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            console.warn(`Request to ${url} returned non-JSON content: ${contentType}`);
+            continue;
+          }
+          
           result = await resp.json();
           
           // Обрабатываем разные форматы ответа
@@ -65,6 +76,11 @@ function App() {
               || productsArray[0];
             setSelectedProduct(preferred);
             break;
+          } else if (productsArray && productsArray.length === 0) {
+            // Массив пустой - данные есть, но товаров нет
+            console.warn('Products array is empty. Make sure to run seed script: npm run seed in holzverliebt_back');
+            result = { data: [] }; // Сохраняем результат для логирования
+            break;
           }
         } catch (e) {
           console.error('Error fetching products from', url, e);
@@ -74,12 +90,15 @@ function App() {
       }
 
       if (!result) {
-        const errorMsg = 'Failed to load products from backend. ';
-        const details = urls.length > 0 
-          ? `Tried: ${urls.join(', ')}` 
-          : 'No URLs to try';
+        const errorMsg = 'Не удалось загрузить товары с сервера. ';
+        const details = 'Убедитесь, что бэкенд запущен (npm run start:dev в holzverliebt_back)';
         setError(errorMsg + details);
         console.error('Failed to load products. Tried URLs:', urls);
+        console.error('Make sure backend is running on port 3000');
+      } else if (result && result.data && result.data.length === 0) {
+        // Данные загружены, но массив пустой
+        setError('Товары не найдены. Запустите seed скрипт: npm run seed в holzverliebt_back');
+        console.warn('Products array is empty. Run seed script to populate database.');
       } else {
         console.log('Products loaded successfully:', result);
       }
