@@ -45,24 +45,43 @@ function App() {
           const resp = await fetch(url, { cache: 'no-store' });
           if (!resp.ok) continue;
           result = await resp.json();
-          if (result && result.data && Array.isArray(result.data)) {
-                setProducts(result.data);
-                // Prefer specific SKUs first (SNACK-001), then sensory panels, then Derila, then fallback to first
-                const preferred = result.data.find(p => p.sku === 'SNACK-001')
-                  || result.data.find(p => /sensory|sinnesp/i.test(p.name))
-                  || result.data.find(p => /derila/i.test(p.name))
-                  || result.data[0];
-                setSelectedProduct(preferred);
-                break;
+          
+          // Обрабатываем разные форматы ответа
+          let productsArray = null;
+          if (Array.isArray(result)) {
+            // Если ответ - массив напрямую
+            productsArray = result;
+          } else if (result && result.data && Array.isArray(result.data)) {
+            // Если ответ обернут в объект с полем data
+            productsArray = result.data;
+          }
+          
+          if (productsArray && productsArray.length > 0) {
+            setProducts(productsArray);
+            // Prefer specific SKUs first (SNACK-001), then sensory panels, then Derila, then fallback to first
+            const preferred = productsArray.find(p => p.sku === 'SNACK-001')
+              || productsArray.find(p => /sensory|sinnesp/i.test(p.name))
+              || productsArray.find(p => /derila/i.test(p.name))
+              || productsArray[0];
+            setSelectedProduct(preferred);
+            break;
           }
         } catch (e) {
+          console.error('Error fetching products from', url, e);
           // try next URL
           continue;
         }
       }
 
       if (!result) {
-        setError('Failed to load products from backend.');
+        const errorMsg = 'Failed to load products from backend. ';
+        const details = urls.length > 0 
+          ? `Tried: ${urls.join(', ')}` 
+          : 'No URLs to try';
+        setError(errorMsg + details);
+        console.error('Failed to load products. Tried URLs:', urls);
+      } else {
+        console.log('Products loaded successfully:', result);
       }
 
       setLoading(false);
