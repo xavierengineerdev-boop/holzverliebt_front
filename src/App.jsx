@@ -170,7 +170,7 @@ function App() {
       quantity: quantity,
       productId: prod?._id,
       productName: prod?.name,
-      totalPrice: prod?.price?.current * quantity
+      totalPrice: prod?.price?.current ? prod.price.current * quantity : 0
     }))
     try {
       const prod = selectedProduct || (products && products[0])
@@ -180,11 +180,11 @@ function App() {
         id: productId,
         _id: productId,
         title: prod?.name,
-        price: prod?.price?.current,
+        price: prod?.price?.current || 0,
         quantity: quantity
       };
       localStorage.setItem('cart', JSON.stringify([cartItem]));
-      localStorage.setItem('checkoutPrice', (prod?.price?.current * quantity).toFixed(2));
+      localStorage.setItem('checkoutPrice', prod?.price?.current ? (prod.price.current * quantity).toFixed(2) : '0.00');
       localStorage.setItem('checkoutCurrency', (prod?.price?.currency || 'zł'));
       localStorage.setItem('productName', prod?.name || '');
     } catch (err) {
@@ -223,7 +223,7 @@ function App() {
       
       // Сохраняем сумму и название продукта для отображения на странице оплаты
       const prod = selectedProduct || (products && products[0])
-      const totalPrice = prod && prod.price ? (prod.price.current * quantity).toFixed(2) : '0.00';
+      const totalPrice = prod && prod.price && prod.price.current ? (prod.price.current * quantity).toFixed(2) : '0.00';
       const productName = prod && prod.name ? prod.name : '';
       
       localStorage.setItem('checkoutPrice', totalPrice);
@@ -240,7 +240,7 @@ function App() {
           id: productId,
           _id: productId,
           title: productName,
-          price: prod && prod.price ? prod.price.current : 0,
+          price: prod && prod.price && prod.price.current ? prod.price.current : 0,
           quantity: quantity
         };
         localStorage.setItem('cart', JSON.stringify([cartItem]));
@@ -392,8 +392,26 @@ function App() {
               <span className="rating-text">({selectedProduct ? (selectedProduct.reviewsCount !== undefined ? selectedProduct.reviewsCount : 22) : (products.length > 0 ? (products[0].reviewsCount !== undefined ? products[0].reviewsCount : 22) : 22)})</span>
             </div>
             <div className="price-row">
-              <div className="price-current">{selectedProduct ? (selectedProduct.price.current * quantity).toFixed(2) : (products.length > 0 ? (products[0].price.current * quantity).toFixed(2) : '409.99')} {selectedProduct ? selectedProduct.price.currency : (products.length > 0 ? products[0].price.currency : 'zł')}</div>
-              <div className="price-old">{selectedProduct ? (selectedProduct.price.old * quantity).toFixed(2) : (products.length > 0 ? (products[0].price.old * quantity).toFixed(2) : '829.99')} {selectedProduct ? selectedProduct.price.currency : (products.length > 0 ? products[0].price.currency : 'zł')}</div>
+              <div className="price-current">
+                {(() => {
+                  const prod = selectedProduct || (products.length > 0 ? products[0] : null);
+                  if (prod && prod.price && prod.price.current) {
+                    return `${(prod.price.current * quantity).toFixed(2)} ${prod.price.currency || 'zł'}`;
+                  }
+                  return 'Цена не загружена';
+                })()}
+              </div>
+              {(() => {
+                const prod = selectedProduct || (products.length > 0 ? products[0] : null);
+                if (prod && prod.price && prod.price.old) {
+                  return (
+                    <div className="price-old">
+                      {(prod.price.old * quantity).toFixed(2)} {prod.price.currency || 'zł'}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
             <div className="delivery">Kostenloser Versand</div>
             <button className="btn-add" onClick={handleBuyClick}>In den Warenkorb legen</button>
@@ -519,8 +537,26 @@ function App() {
               <p className="footer-subtitle">für gemütliche Abende</p>
             </div>
             <div className="footer-pricing">
-              <div className="footer-price-current">{selectedProduct ? (selectedProduct.price.current * quantity).toFixed(2) : (products.length > 0 ? (products[0].price.current * quantity).toFixed(2) : '409.99')} {selectedProduct ? selectedProduct.price.currency : (products.length > 0 ? products[0].price.currency : 'zł')}</div>
-              <div className="footer-price-old">{selectedProduct ? (selectedProduct.price.old * quantity).toFixed(2) : (products.length > 0 ? (products[0].price.old * quantity).toFixed(2) : '829.99')} {selectedProduct ? selectedProduct.price.currency : (products.length > 0 ? products[0].price.currency : 'zł')}</div>
+              <div className="footer-price-current">
+                {(() => {
+                  const prod = selectedProduct || (products.length > 0 ? products[0] : null);
+                  if (prod && prod.price && prod.price.current) {
+                    return `${(prod.price.current * quantity).toFixed(2)} ${prod.price.currency || 'zł'}`;
+                  }
+                  return 'Цена не загружена';
+                })()}
+              </div>
+              {(() => {
+                const prod = selectedProduct || (products.length > 0 ? products[0] : null);
+                if (prod && prod.price && prod.price.old) {
+                  return (
+                    <div className="footer-price-old">
+                      {(prod.price.old * quantity).toFixed(2)} {prod.price.currency || 'zł'}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
             <div className="footer-quantity">
               <button className="qty-btn" onClick={handleQuantityDecrease}>−</button>
@@ -688,7 +724,15 @@ function App() {
               <div className="form-summary">
                 <p>Produkt: {selectedProduct ? selectedProduct.name : (products.length > 0 ? products[0].name : 'N/A')}</p>
                 <p>Ilość: {quantity}</p>
-                <p className="total-price">Razem: {selectedProduct ? (selectedProduct.price.current * quantity).toFixed(2) : (products.length > 0 ? (products[0].price.current * quantity).toFixed(2) : '0')} {selectedProduct ? selectedProduct.price.currency : (products.length > 0 ? products[0].price.currency : 'zł')}</p>
+                <p className="total-price">
+                  Razem: {(() => {
+                    const prod = selectedProduct || (products.length > 0 ? products[0] : null);
+                    if (prod && prod.price && prod.price.current) {
+                      return `${(prod.price.current * quantity).toFixed(2)} ${prod.price.currency || 'zł'}`;
+                    }
+                    return 'Цена не загружена';
+                  })()}
+                </p>
               </div>
 
               <button type="submit" className="btn-submit">Potwierdź zamówienie</button>
